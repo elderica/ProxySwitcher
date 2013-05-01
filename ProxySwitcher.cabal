@@ -1,0 +1,19 @@
+name: ProxySwitcher
+version: 0.1
+license: BSD3
+author: Kazuki Shigemichi <shigemichik@gmail.com>
+synopsis: Tiny utility to set proxy for Microsoft Windows 7
+category: System
+stability: experimental
+build-type: Simple
+cabal-version:  >=1.6
+
+source-repository head
+    type:     git
+    location: http://github.com/sbwhitecap/ProxySwitcher.git
+
+executable ProxySwitcher
+  hs-source-dirs: .
+  main-is: ProxySwitcher.hs
+  build-depends: base, Win32, optparse-applicative
+  extensions: ScopedTypeVariables
