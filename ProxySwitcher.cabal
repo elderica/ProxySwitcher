@@ -1,5 +1,5 @@
 name: ProxySwitcher
-version: 0.1
+version: 0.2
 license: BSD3
 author: Kazuki Shigemichi <shigemichik@gmail.com>
 synopsis: Tiny utility to set proxy for Microsoft Windows 7

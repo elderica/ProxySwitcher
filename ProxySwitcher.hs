@@ -1,17 +1,29 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- 2013-05-01
-module Main (main)
+module Main (
+  keyStr,
+  openIEKey,
+  isProxyEnable,
+  getProxyServer,
+  setProxyIs,
+  setProxyServer,
+  CmdOpt(..),
+  cmdParser,
+  printCurrentSettings,
+  b2ed,
+  main',
+  main)
   where
 
 import Foreign
+import Foreign.C
 import System.Win32
 import Text.Printf
 import Control.Monad (when)
+import Graphics.Win32
 import Options.Applicative -- package optparse-applicative
 
 keyStr = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"
-
-tuesProxy = "proxy.kankyo-u.ac.jp:80"
 
 openIEKey = regOpenKey hKEY_CURRENT_USER keyStr
 
@@ -20,13 +32,13 @@ isProxyEnable :: IO Bool
 isProxyEnable = do
   key <- openIEKey
   ptr <- malloc
-  regQueryValueEx key "ProxyEnable" ptr (sizeOf (0 :: DWORD))
+  regQueryValueEx key "ProxyEnable" ptr $ sizeOf (undefined :: DWORD)
   b <- peek ptr
   free ptr
   regCloseKey key
-  return $ if b == 0
-    then False
-    else True
+  return $ case b of
+    0 -> False
+    1 -> True
 
 -- |現在設定されているプロキシサーバは？
 getProxyServer :: IO String
@@ -40,12 +52,12 @@ getProxyServer = do
 setProxyIs :: Bool -> IO ()
 setProxyIs b = do
   key <- openIEKey
-  ptr <- malloc
   let b' = case b of
             True -> 1
-            False -> 0           
+            False -> 0
+  ptr :: Ptr DWORD <- malloc
   poke ptr b'
-  regSetValueEx key "ProxyEnable" rEG_DWORD ptr (sizeOf (0 :: DWORD))
+  regSetValueEx key "ProxyEnable" rEG_DWORD (castPtr ptr) $ sizeOf (undefined :: DWORD)
   free ptr
   regCloseKey key
 
@@ -101,11 +113,8 @@ main' (CmdOpt newHost chk) = do
     setProxyServer newHost
     printf "Proxy was set `%s` and enabled.\n" newHost
 
-main :: IO ()
-main = execParser opts >>= main'
+main = execParser opts >>= main' >> sendMessage (castUINTPtrToPtr 0xffff) wM_WININICHANGE 0 0
   where opts = info (helper <*> cmdParser)
           ( fullDesc <>
             progDesc "Proxy Swiching" <>
             header "ProxySwitcher" )
-      
-  
